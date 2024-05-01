@@ -1,95 +1,107 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+"use client";
+
+import { trpc } from "./_trpc/client";
+
+import { useState } from "react";
+import AddPokemon from "./components/AddPokemon";
+import PokemonList from "./components/PokemonTable";
+
+import TextField from "@mui/material/TextField";
+import Button from "@mui/material/Button";
+import { Container, Stack } from "@mui/material";
 
 export default function Home() {
+  const [name, setName] = useState("");
+  const [types, setTypes] = useState("");
+  const [filter, setFilter] = useState(false);
+  const [pokemon, setPokemon] = useState([{}]);
+
+  const pokemonByName = trpc.pokemon.getPokemonByName.useQuery({ name: name });
+  const pokemonByType = trpc.pokemon.getPokemonByType.useQuery({
+    types: types,
+  });
+  const pokemonByTypeAndName = trpc.pokemon.getPokemonByTypeAndName.useQuery({
+    name: name,
+    types: types,
+  });
+
+  const searchHandler = (event: any) => {
+    event.preventDefault();
+    var arr: any;
+    if (name.length != 0 && types.length != 0) {
+      arr = pokemonByTypeAndName?.data;
+      console.log("arr", arr);
+      console.log("Both are mentioned");
+    } else if (name.length == 0 && types.length != 0) {
+      arr = pokemonByType?.data;
+      console.log("arr", arr);
+      console.log("Types are mentioned");
+    } else if (name.length != 0 && types.length == 0) {
+      arr = pokemonByName?.data;
+      console.log("arr", arr);
+      console.log("Names are mentioned");
+    } else {
+      console.log("EMPTY");
+    }
+    setPokemon(arr);
+    setFilter(true);
+    setName("");
+    setTypes("");
+  };
+
   return (
-    <main className={styles.main}>
-      <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>src/app/page.tsx</code>
-        </p>
-        <div>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
+    <main>
+      <Container style={{ marginTop: "100px" }}>
+        <AddPokemon></AddPokemon>
+        <div
+          style={{
+            marginTop: "100px",
+            marginLeft: "100px",
+            minWidth: "1000px",
+          }}
+        >
+          <form style={{ minWidth: "500" }}>
+            <Stack spacing={3} direction="row">
+              <div>
+                <TextField
+                  onChange={(e) => setName(e.target.value)}
+                  label="Name"
+                  variant="outlined"
+                  color="secondary"
+                  type="text"
+                  value={name}
+                  size="small"
+                  fullWidth
+                />
+              </div>
+              <div>
+                <TextField
+                  onChange={(e) => setTypes(e.target.value)}
+                  label="Type"
+                  variant="outlined"
+                  color="secondary"
+                  type="text"
+                  value={types}
+                  size="small"
+                  fullWidth
+                />
+              </div>
+              <div style={{ marginTop: "3px" }}>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  type="submit"
+                  style={{ width: "200px", height: "30px" }}
+                  onClick={(e) => searchHandler(e)}
+                >
+                  Search Pokemon
+                </Button>
+              </div>
+            </Stack>
+          </form>
         </div>
-      </div>
-
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className={styles.grid}>
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Docs <span>-&gt;</span>
-          </h2>
-          <p>Find in-depth information about Next.js features and API.</p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Learn <span>-&gt;</span>
-          </h2>
-          <p>Learn about Next.js in an interactive course with&nbsp;quizzes!</p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Templates <span>-&gt;</span>
-          </h2>
-          <p>Explore starter templates for Next.js.</p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
+        <PokemonList pokemon={pokemon} filter={filter}></PokemonList>
+      </Container>
     </main>
   );
 }
